@@ -1,12 +1,10 @@
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, ImageOverlay, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { fetchFloors, fetchNodes, fetchRoute, fetchSvgSize, svgUrl, ApiError, API_BASE_URL } from './api'
-
-// App.jsx 의 건물 id(1, 2, 3) -> 백엔드 DB 의 building_id
-const BUILDING_ID_BY_APP_ID = { 1: 'Y05', 2: 'Y09', 3: 'Y02' }
+import { BUILDING_ID_BY_APP_ID, floorLabel } from './buildingMap'
 
 const TYPE_LABEL = {
   CLASSROOM: '강의실',
@@ -19,11 +17,6 @@ const TYPE_LABEL = {
 const SELECTABLE_TYPES = ['CLASSROOM', 'ENTRANCE', 'ELEVATOR']
 
 const ALGORITHM_LABEL = { dijkstra: '다익스트라', bfs: 'BFS' }
-
-// 'Y09_B1F' -> 'B1F'
-function floorLabel(floorId) {
-  return floorId.split('_')[1] || floorId
-}
 
 function nodeLabel(node) {
   if (node.node_type === 'CLASSROOM') return node.node_name || `강의실 ${node.node_id}`
@@ -40,8 +33,10 @@ function MapController({ bounds }) {
   return null
 }
 
-export default function FloorMap({ building, onBack }) {
+// focusNode: 홈 화면의 강의실 검색에서 고른 노드. 있으면 그 층을 먼저 열고 도착지로 선택해 둔다.
+export default function FloorMap({ building, onBack, focusNode = null }) {
   const buildingId = BUILDING_ID_BY_APP_ID[building.id]
+  const focusRef = useRef(focusNode)
 
   // ----- 서버에서 받아온 데이터 -----
   const [status, setStatus] = useState('loading') // 'loading' | 'ready' | 'error'
@@ -80,7 +75,10 @@ export default function FloorMap({ building, onBack }) {
         }
         setFloors(floorList)
         setNodes(allNodes.filter((node) => node.building_id === buildingId))
-        setFloorId(floorList[0].floor_id)
+        const focus = focusRef.current
+        const focusFloor = focus && floorList.find((floor) => floor.floor_id === focus.floor_id)
+        setFloorId(focusFloor ? focusFloor.floor_id : floorList[0].floor_id)
+        if (focusFloor) setEndId(String(focus.node_id))
         setStatus('ready')
       } catch (error) {
         if (cancelled) return
@@ -265,6 +263,8 @@ export default function FloorMap({ building, onBack }) {
   } else if (route) {
     const path = routeSegments.map((segment) => floorLabel(segment.floorId)).join(' → ')
     notice = `${ALGORITHM_LABEL[route.algorithm] || route.algorithm} 경로 · ${path} · 도면 기준 거리 ${route.total_distance}`
+  } else if (endNode && !startNode) {
+    notice = `도착지 ${nodeLabel(endNode)}이(가) 선택됐어요. 출발지를 선택하세요.`
   } else if (imageReady && floorNodes.length === 0) {
     notice = '이 층에는 아직 등록된 위치가 없어요.'
   }

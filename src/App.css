@@ -326,3 +326,52 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* ===== 강의실 검색 결과 (검색 기능 추가) ===== */
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: white;
+  border: 1px solid #e2e6ed;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.search-result:hover {
+  border-color: #526a9d;
+  background: #f9faff;
+}
+
+.search-result strong {
+  font-size: 14px;
+}
+
+.search-result small {
+  color: #7b8496;
+  font-size: 11px;
+}
+
+.search-message {
+  margin: 4px 0;
+  padding: 12px;
+  background: #e8edf7;
+  border-radius: 12px;
+  color: #344054;
+  font-size: 12px;
+  text-align: center;
+}
