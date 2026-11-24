@@ -86,7 +86,7 @@ function App() {
       <main className="content">
         <div className="mascot-greeting">
           <img src={mascot} alt="" />
-          <span className="speech-bubble">어디로 갈까요?</span>
+          <span className="speech-bubble">마루와 함께 출발해 볼까요?</span>
         </div>
         <div className="search-box">
           <span>⌕</span>
