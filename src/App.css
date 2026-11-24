@@ -522,13 +522,13 @@
 }
 
 .mascot-greeting img {
-  height: 108px;
+  height: 128px;
   width: auto;
 }
 
 .speech-bubble {
   position: relative;
-  margin-bottom: 52px;
+  margin-bottom: 62px;
   padding: 9px 14px;
   background: #e8edf7;
   color: #1d2948;
