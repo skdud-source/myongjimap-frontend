@@ -471,7 +471,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
                 radius={9}
                 pathOptions={{ color: 'white', fillColor: '#16a34a', fillOpacity: 1, weight: 3 }}
               >
-                <Tooltip>출발 · {nodeLabel(startNode)}</Tooltip>
+                <Tooltip permanent direction="top" offset={[0, -8]}>출발 · {nodeLabel(startNode)}</Tooltip>
               </CircleMarker>
             )}
 
@@ -481,7 +481,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
                 radius={9}
                 pathOptions={{ color: 'white', fillColor: '#dc2626', fillOpacity: 1, weight: 3 }}
               >
-                <Tooltip>도착 · {nodeLabel(endNode)}</Tooltip>
+                <Tooltip permanent direction="bottom" offset={[0, 8]}>도착 · {nodeLabel(endNode)}</Tooltip>
               </CircleMarker>
             )}
           </MapContainer>
