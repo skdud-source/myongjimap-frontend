@@ -3,9 +3,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, ImageOverlay, Polyline, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { fetchFloors, fetchNodes, fetchRoute, fetchSvgSize, svgUrl, ApiError, API_BASE_URL } from './api'
+import { fetchFacilities, fetchFloors, fetchNodes, fetchRoute, fetchSvgSize, svgUrl, ApiError, API_BASE_URL } from './api'
 import { BUILDING_ID_BY_APP_ID, floorLabel } from './buildingMap'
-import { AMENITIES, FILTERS, classifyAmenity } from './amenities'
+import { FILTERS, FACILITY_TYPES_BY_FILTER } from './amenities'
 
 const TYPE_LABEL = {
   CLASSROOM: '강의실',
@@ -45,6 +45,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
   const [reloadKey, setReloadKey] = useState(0)
   const [floors, setFloors] = useState([])
   const [nodes, setNodes] = useState([])
+  const [facilities, setFacilities] = useState([])
   const [floorId, setFloorId] = useState(null)
 
   // ----- 도면 이미지 크기 -----
@@ -74,12 +75,15 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
           throw new ApiError('이 건물의 데이터가 아직 연결되지 않았어요.', 'data')
         }
         const [floorList, allNodes] = await Promise.all([fetchFloors(buildingId), fetchNodes()])
+        // 편의시설은 없어도 길찾기는 되어야 하므로, 실패해도 지도 전체를 막지 않는다
+        const facilityList = await fetchFacilities().catch(() => [])
         if (cancelled) return
         if (floorList.length === 0) {
           throw new ApiError('이 건물의 층 정보가 아직 등록되지 않았어요.', 'data')
         }
         setFloors(floorList)
         setNodes(allNodes.filter((node) => node.building_id === buildingId))
+        setFacilities(facilityList.filter((item) => item.building_id === buildingId))
         const focus = focusRef.current
         const focusFloor = focus && floorList.find((floor) => floor.floor_id === focus.floor_id)
         setFloorId(focusFloor ? focusFloor.floor_id : floorList[0].floor_id)
@@ -162,20 +166,16 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
     return segments
   }, [route])
 
-  // 편의시설: 선택한 종류의 시설 중 DB에 좌표가 있는 노드만 지도에 표시한다.
+  // 편의시설: 선택한 종류의 시설 중 현재 층에 등록된 것을 DB 좌표 그대로 지도에 표시한다.
   const floorShort = floorId ? floorLabel(floorId) : ''
-  const mappedAmenities = AMENITIES.filter(
-    (place) => place.buildingId === buildingId && place.floor === floorShort && place.type === selectedAmenity,
+  const amenityTypes = selectedAmenity ? FACILITY_TYPES_BY_FILTER[selectedAmenity] || [] : []
+  const amenityNodes = facilities.filter(
+    (item) =>
+      item.floor_id === floorId &&
+      amenityTypes.includes(item.facility_type) &&
+      Number.isFinite(Number(item.x)) &&
+      Number.isFinite(Number(item.y)),
   )
-  const amenityNodes = selectedAmenity
-    ? nodes.filter(
-        (node) =>
-          node.floor_id === floorId &&
-          classifyAmenity(node) === selectedAmenity &&
-          Number.isFinite(Number(node.x)) &&
-          Number.isFinite(Number(node.y)),
-      )
-    : []
   const amenityMarker = FILTERS.find((item) => item.type === selectedAmenity)
 
   const routeFloorIds = new Set(routeSegments.map((segment) => segment.floorId))
@@ -330,11 +330,9 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
       {selectedAmenity && (
         <p className="filter-status">
           {amenityMarker && amenityMarker.label} 표시 중
-          {mappedAmenities.length === 0
+          {amenityNodes.length === 0
             ? ' · 이 층에는 등록된 시설이 없어요'
-            : amenityNodes.length === 0
-              ? ' · 이 층의 좌표 데이터는 아직 없어요'
-              : ''}
+            : ` · 이 층 ${amenityNodes.length}곳`}
         </p>
       )}
 
@@ -432,7 +430,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
 
             {amenityNodes.map((node) => (
               <Marker
-                key={`amenity-${node.node_id}`}
+                key={`amenity-${node.facility_id}`}
                 position={toLatLng(node)}
                 icon={L.divIcon({
                   className: 'amenity-marker',
@@ -441,7 +439,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
                   iconAnchor: [17, 17],
                 })}
               >
-                <Tooltip>{amenityMarker ? amenityMarker.label : ''} · {nodeLabel(node)}</Tooltip>
+                <Tooltip>{node.facility_name} · {floorLabel(node.floor_id)}</Tooltip>
               </Marker>
             ))}
 

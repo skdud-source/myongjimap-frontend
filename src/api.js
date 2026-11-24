@@ -70,6 +70,11 @@ export async function fetchNodes() {
   return ensureArray(await request('/api/nodes'))
 }
 
+// GET /api/facilities  -> 편의시설 목록 (facility_type: CONVENIENCE | CAFE | PRINT | TOILET, x/y는 SVG 좌표)
+export async function fetchFacilities() {
+  return ensureArray(await request('/api/facilities'))
+}
+
 // GET /api/route?from=..&to=..&algorithm=dijkstra|bfs  -> { algorithm, total_distance, nodes[] }
 export async function fetchRoute(fromId, toId, algorithm = 'dijkstra') {
   const data = await request('/api/route', { from: fromId, to: toId, algorithm })

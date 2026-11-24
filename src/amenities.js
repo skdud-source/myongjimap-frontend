@@ -1,6 +1,4 @@
-// 편의시설 안내 데이터 (팀원 개인 저장소의 2차 개선 내용을 통합)
-// 층·건물 정보만 확정된 상태이며, 지도에 표시할 좌표는 DB 노드에서 읽는다.
-// DB에 해당 시설 노드가 없으면 임의 좌표를 만들어 찍지 않고 "좌표 데이터 확인 필요"로 안내한다.
+// 편의시설 안내 문구용 목록 (홈 화면). 지도에 찍는 좌표는 백엔드 /api/facilities(DB facilities 표)에서 읽는다.
 export const AMENITIES = [
   { type: 'store', buildingId: 'Y09', floor: '3F', name: '편의점', emoji: '🏪' },
   { type: 'printer', buildingId: 'Y02', floor: '5F', name: '프린터', emoji: '🖨️' },
@@ -21,13 +19,9 @@ export const FILTERS = [
   { type: 'restroom', label: '화장실', emoji: '🚻' },
 ]
 
-// 노드 이름·유형으로 편의시설 종류를 가려낸다. 해당하지 않으면 null
-export function classifyAmenity(node) {
-  const kind = String(node.node_type ?? '').toUpperCase()
-  const label = String(node.node_name ?? '').toLowerCase()
-  const text = `${kind} ${label}`
-  if (/RESTROOM|TOILET|WC|화장실/i.test(text)) return 'restroom'
-  if (/PRINTER|PRINT|프린터|인쇄/i.test(text)) return 'printer'
-  if (/CAFE|CONVENIENCE|STORE|SHOP|편의점|카페/i.test(text)) return 'store'
-  return null
+// 화면의 필터 종류 -> DB(facilities.facility_type) 시설 유형
+export const FACILITY_TYPES_BY_FILTER = {
+  store: ['CONVENIENCE', 'CAFE'],
+  printer: ['PRINT'],
+  restroom: ['TOILET'],
 }
