@@ -1,10 +1,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { MapContainer, ImageOverlay, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet'
+import { MapContainer, ImageOverlay, Polyline, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { fetchFloors, fetchNodes, fetchRoute, fetchSvgSize, svgUrl, ApiError, API_BASE_URL } from './api'
 import { BUILDING_ID_BY_APP_ID, floorLabel } from './buildingMap'
+import { AMENITIES, FILTERS, classifyAmenity } from './amenities'
 
 const TYPE_LABEL = {
   CLASSROOM: '강의실',
@@ -56,6 +57,10 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
   const [route, setRoute] = useState(null)
   const [routeError, setRouteError] = useState('')
   const [routing, setRouting] = useState(false)
+
+  // ----- 편의시설 필터 / 강의실 번호 고정 -----
+  const [selectedAmenity, setSelectedAmenity] = useState(null)
+  const [pinnedId, setPinnedId] = useState(null) // 클릭해서 번호를 고정해 둔 강의실
 
   // 건물이 바뀌거나 "다시 시도"를 누르면 층과 노드를 다시 불러온다
   useEffect(() => {
@@ -157,6 +162,22 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
     return segments
   }, [route])
 
+  // 편의시설: 선택한 종류의 시설 중 DB에 좌표가 있는 노드만 지도에 표시한다.
+  const floorShort = floorId ? floorLabel(floorId) : ''
+  const mappedAmenities = AMENITIES.filter(
+    (place) => place.buildingId === buildingId && place.floor === floorShort && place.type === selectedAmenity,
+  )
+  const amenityNodes = selectedAmenity
+    ? nodes.filter(
+        (node) =>
+          node.floor_id === floorId &&
+          classifyAmenity(node) === selectedAmenity &&
+          Number.isFinite(Number(node.x)) &&
+          Number.isFinite(Number(node.y)),
+      )
+    : []
+  const amenityMarker = FILTERS.find((item) => item.type === selectedAmenity)
+
   const routeFloorIds = new Set(routeSegments.map((segment) => segment.floorId))
   const startNode = nodeById.get(startId) || null
   const endNode = nodeById.get(endId) || null
@@ -185,6 +206,8 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
   // 지도에서 위치를 누르면 출발지 -> 도착지 순서로 선택된다
   function handlePickNode(node) {
     const id = String(node.node_id)
+    // 강의실을 누르면 번호를 말풍선으로 고정한다. 같은 강의실을 다시 누르거나 층을 바꾸면 해제된다.
+    if (node.node_type === 'CLASSROOM') setPinnedId((prev) => (prev === id ? null : id))
     clearRoute()
     if (!startId || (startId && endId)) {
       setStartId(id)
@@ -281,12 +304,39 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
               floorId === floor.floor_id ? 'active' : '',
               routeFloorIds.has(floor.floor_id) ? 'on-route' : '',
             ].join(' ').trim()}
-            onClick={() => setFloorId(floor.floor_id)}
+            onClick={() => {
+              setFloorId(floor.floor_id)
+              setPinnedId(null)
+            }}
           >
             {floorLabel(floor.floor_id)}
           </button>
         ))}
       </div>
+
+      <div className="amenity-filters" aria-label="편의시설 표시">
+        {FILTERS.map((filter) => (
+          <button
+            key={filter.type}
+            type="button"
+            aria-pressed={selectedAmenity === filter.type}
+            className={selectedAmenity === filter.type ? 'active' : ''}
+            onClick={() => setSelectedAmenity(selectedAmenity === filter.type ? null : filter.type)}
+          >
+            {filter.emoji} {filter.label}
+          </button>
+        ))}
+      </div>
+      {selectedAmenity && (
+        <p className="filter-status">
+          {amenityMarker && amenityMarker.label} 표시 중
+          {mappedAmenities.length === 0
+            ? ' · 이 층에는 등록된 시설이 없어요'
+            : amenityNodes.length === 0
+              ? ' · 이 층의 좌표 데이터는 아직 없어요'
+              : ''}
+        </p>
+      )}
 
       <div className="route-panel">
         <div className="route-row">
@@ -338,6 +388,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
       </div>
 
       <div className="map-wrapper">
+        <div className="map-floor-indicator" aria-label={`현재 층 ${floorShort}`}>{floorShort}</div>
         {imageFailed && (
           <p className="map-notice">이 층의 도면을 불러오지 못했어요.</p>
         )}
@@ -369,8 +420,29 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
                 pathOptions={{ color: '#64748b', fillColor: '#ffffff', fillOpacity: 1, weight: 2 }}
                 eventHandlers={{ click: () => handlePickNode(node) }}
               >
-                <Tooltip>{nodeLabel(node)}</Tooltip>
+                {/* 고정된 강의실은 permanent 말풍선으로 계속 보인다 (key로 모드 변경 시 다시 그림) */}
+                <Tooltip
+                  key={String(pinnedId === String(node.node_id))}
+                  permanent={pinnedId === String(node.node_id)}
+                >
+                  {nodeLabel(node)}
+                </Tooltip>
               </CircleMarker>
+            ))}
+
+            {amenityNodes.map((node) => (
+              <Marker
+                key={`amenity-${node.node_id}`}
+                position={toLatLng(node)}
+                icon={L.divIcon({
+                  className: 'amenity-marker',
+                  html: `<span>${amenityMarker ? amenityMarker.emoji : ''}</span>`,
+                  iconSize: [34, 34],
+                  iconAnchor: [17, 17],
+                })}
+              >
+                <Tooltip>{amenityMarker ? amenityMarker.label : ''} · {nodeLabel(node)}</Tooltip>
+              </Marker>
             ))}
 
             {routeSegments
@@ -414,6 +486,20 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
             )}
           </MapContainer>
         )}
+      </div>
+
+      <div className="route-summary" aria-live="polite">
+        <div className="route-endpoint">
+          <small>출발지</small>
+          <strong>{startNode ? nodeLabel(startNode) : '미선택'}</strong>
+          {startNode && <em>{floorLabel(startNode.floor_id)}</em>}
+        </div>
+        <span className="route-arrow" aria-hidden="true">→</span>
+        <div className="route-endpoint">
+          <small>도착지</small>
+          <strong>{endNode ? nodeLabel(endNode) : '미선택'}</strong>
+          {endNode && <em>{floorLabel(endNode.floor_id)}</em>}
+        </div>
       </div>
 
       <p className="map-notice">{notice}</p>

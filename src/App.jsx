@@ -4,6 +4,7 @@ import './App.css'
 import FloorMap from './FloorMap'
 import { fetchNodes } from './api'
 import { APP_ID_BY_BUILDING_ID, floorLabel } from './buildingMap'
+import { AMENITIES } from './amenities'
 
 const buildings = [
   { id: 1, short: '5', name: '5공학관', desc: '전공 강의실 · 층별 프린터', floors: '1F 4F', color: 'navy' },
@@ -142,27 +143,25 @@ function App() {
           ))}
         </div>
 
-        <h3>편의시설 바로 찾기</h3>
+        <h3>편의시설 위치</h3>
 
-        <div className="facility-list">
-          {[
-            ['☕', '카페'],
-            ['🖨️', '프린터'],
-            ['🚻', '화장실'],
-            ['📚', '자습공간'],
-          ].map(([icon, name]) => (
-            <button key={name} className="facility-card">
-              <span>{icon}</span>
-              <small>{name}</small>
-            </button>
-          ))}
+        <div className="amenity-list" aria-label="편의시설 위치 안내">
+          {AMENITIES.filter((place) => place.type !== 'restroom').map((place) => {
+            const placeBuilding = buildings.find(
+              (item) => item.id === APP_ID_BY_BUILDING_ID[place.buildingId],
+            )
+            return (
+              <p key={`${place.type}-${place.buildingId}-${place.floor}`}>
+                {place.emoji} {place.name}은 {placeBuilding ? placeBuilding.name : place.buildingId} {place.floor}에 있습니다.
+              </p>
+            )
+          })}
+          <p>🚻 화장실은 각 건물의 모든 안내 대상 층에 있습니다.</p>
         </div>
-
-
       </main>
 
       <footer className="footer">
-        ♿ 배리어프리 경로 지원 예정
+        명지맵 · 캠퍼스 실내 길찾기
       </footer>
     </div>
   )

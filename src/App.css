@@ -375,3 +375,133 @@
   font-size: 12px;
   text-align: center;
 }
+
+/* ---- 편의시설 필터 · 층 표시 · 출발지/도착지 요약 (팀원 2차 개선 통합) ---- */
+.amenity-list {
+  padding: 14px 15px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #f8fbff;
+}
+
+.amenity-list p {
+  margin: 7px 0;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.amenity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 0 16px 10px;
+}
+
+.amenity-filters button {
+  padding: 9px 12px;
+  border: 1px solid #bfd2f5;
+  border-radius: 9px;
+  background: #fff;
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.amenity-filters button.active {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.filter-status {
+  margin: 0 16px 10px;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.map-wrapper {
+  position: relative;
+}
+
+.map-floor-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  min-width: 56px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  border: 2px solid #1d4ed8;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.12);
+  color: #1e3a8a;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  pointer-events: none;
+}
+
+.amenity-marker span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid #1d4ed8;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 20px;
+}
+
+.route-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 14px 16px 0;
+  padding: 14px 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #eff6ff;
+}
+
+.route-endpoint {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.route-endpoint small {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.route-endpoint strong {
+  color: #172554;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.route-endpoint em {
+  color: #1d4ed8;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.route-arrow {
+  flex-shrink: 0;
+  color: #1d4ed8;
+  font-size: 26px;
+  font-weight: 800;
+}
