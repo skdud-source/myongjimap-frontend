@@ -5,6 +5,8 @@ import FloorMap from './FloorMap'
 import { fetchNodes } from './api'
 import { APP_ID_BY_BUILDING_ID, floorLabel } from './buildingMap'
 import { AMENITIES } from './amenities'
+import logo from './assets/brand/logo-horizontal.png'
+import mascot from './assets/brand/mascot-only.png'
 
 const buildings = [
   { id: 1, short: '5', name: '5공학관', desc: '전공 강의실 · 층별 프린터', floors: '1F 4F', color: 'navy' },
@@ -77,11 +79,15 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>📍 명지맵</h1>
+        <h1><img className="header-logo" src={logo} alt="MyongjiMap" /></h1>
         <p>명지대 자연캠퍼스 실내 길찾기</p>
       </header>
 
       <main className="content">
+        <div className="mascot-greeting">
+          <img src={mascot} alt="" />
+          <span className="speech-bubble">어디로 갈까요?</span>
+        </div>
         <div className="search-box">
           <span>⌕</span>
           <input
@@ -95,11 +101,11 @@ function App() {
         {keyword && (
           <div className="search-results">
             {searchError ? (
-              <p className="search-message">{searchError}</p>
+              <div className="search-message with-mascot"><img src={mascot} alt="" /><p>{searchError}</p></div>
             ) : classrooms === null ? (
               <p className="search-message">검색 데이터를 불러오는 중이에요...</p>
             ) : results.length === 0 ? (
-              <p className="search-message">‘{query.trim()}’에 해당하는 강의실이 없어요.</p>
+              <div className="search-message with-mascot"><img src={mascot} alt="" /><p>‘{query.trim()}’에 해당하는 강의실이 없어요.</p></div>
             ) : (
               results.map((node) => {
                 const building = buildingOf(node)

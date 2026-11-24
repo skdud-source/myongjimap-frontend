@@ -5,6 +5,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { fetchFacilities, fetchFloors, fetchNodes, fetchRoute, fetchSvgSize, svgUrl, ApiError, API_BASE_URL } from './api'
 import { BUILDING_ID_BY_APP_ID, floorLabel } from './buildingMap'
+import mascot from './assets/brand/mascot-only.png'
 import { FILTERS, FACILITY_TYPES_BY_FILTER } from './amenities'
 
 const TYPE_LABEL = {
@@ -262,7 +263,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
     return (
       <div className="floor-page">
         {header}
-        <p className="map-notice">지도 데이터를 불러오는 중이에요...</p>
+        <div className="map-notice with-mascot"><img src={mascot} alt="" /><p>지도 데이터를 불러오는 중이에요...</p></div>
       </div>
     )
   }
@@ -272,6 +273,7 @@ export default function FloorMap({ building, onBack, focusNode = null }) {
       <div className="floor-page">
         {header}
         <div className="selection-message" style={{ margin: '16px' }}>
+          <img className="error-mascot" src={mascot} alt="" />
           {errorMessage}
           <p>백엔드 서버({API_BASE_URL})가 켜져 있는지 확인한 뒤 다시 시도해 주세요.</p>
           <button onClick={() => setReloadKey((key) => key + 1)}>다시 시도</button>
